@@ -129,6 +129,7 @@ jobs:
           echo "S3 deployment complete: https://${BUCKET}.s3-website-us-east-1.amazonaws.com"
 
       - name: Invalidate CloudFront (if configured)
+        continue-on-error: true
         env:
           CF_DIST: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         if: env.CF_DIST != ''
