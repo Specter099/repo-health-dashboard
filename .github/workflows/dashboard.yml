@@ -125,9 +125,9 @@ jobs:
           echo "S3 deployment complete: https://${BUCKET}.s3-website-us-east-1.amazonaws.com"
 
       - name: Invalidate CloudFront (if configured)
-        if: secrets.CLOUDFRONT_DISTRIBUTION_ID != ''
         env:
           CF_DIST: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        if: env.CF_DIST != ''
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "$CF_DIST" \
