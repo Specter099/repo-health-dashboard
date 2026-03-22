@@ -198,6 +198,29 @@ html = f"""<!DOCTYPE html>
     font-size: 11px;
     color: var(--text-dim);
   }}
+  .header-right {{
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+  }}
+  .logout-btn {{
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }}
+  .logout-btn:hover {{
+    border-color: var(--red);
+    color: var(--red);
+  }}
 
   /* ── Summary bar ── */
   .summary-bar {{
@@ -448,7 +471,10 @@ html = f"""<!DOCTYPE html>
     <h1>⬡ repo health / <span>{summary["username"]}</span></h1>
     <div class="subtitle">automated hygiene dashboard · updated daily</div>
   </div>
-  <div class="generated">Generated {generated_at}</div>
+  <div class="header-right">
+    <div class="generated">Generated {generated_at}</div>
+    <a href="/logout" class="logout-btn">Logout</a>
+  </div>
 </header>
 
 <div class="summary-bar">
