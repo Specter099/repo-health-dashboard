@@ -99,6 +99,10 @@ jobs:
       github.event.inputs.deploy_target == 'both' ||
       github.event.inputs.deploy_target == 's3'
     runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Download artifact
