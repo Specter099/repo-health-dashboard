@@ -15,12 +15,8 @@ import requests  # type: ignore[import-untyped]
 from dateutil import parser as dateparser  # type: ignore[import-untyped]
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-if not GITHUB_TOKEN:
-    print("ERROR: GITHUB_TOKEN environment variable is required", file=sys.stderr)
-    sys.exit(1)
 USERNAME = os.environ.get("GITHUB_USERNAME", "Specter099")
 OUTPUT_DIR = Path("dist")
-OUTPUT_DIR.mkdir(exist_ok=True)
 
 HEADERS = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
@@ -216,6 +212,11 @@ def compute_health_score(repo: dict) -> int:
 
 
 def main():
+    if not GITHUB_TOKEN:
+        print("ERROR: GITHUB_TOKEN environment variable is required", file=sys.stderr)
+        sys.exit(1)
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
     print(f"Collecting metrics for {USERNAME}...", flush=True)
 
     repos = paginate(
