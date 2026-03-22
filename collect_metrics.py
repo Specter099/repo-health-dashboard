@@ -30,7 +30,7 @@ SKIP_REPOS: set[str] = set()  # add repo names here to exclude
 
 def gh_get(url: str, params: dict | None = None) -> dict | list:
     r = requests.get(url, headers=HEADERS, params=params, timeout=15)
-    if r.status_code == 404:
+    if r.status_code in (403, 404):
         return {}
     r.raise_for_status()
     return r.json()
