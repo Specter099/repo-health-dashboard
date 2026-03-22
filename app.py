@@ -15,6 +15,7 @@ StaticSiteStack(
     dist_path=dist_path,
     hosted_zone_id="Z03182223J9MCRROVG2FB",
     dashboard_name="repo-health",
+    deploy_role_arns=["arn:aws:iam::451645558365:role/github-actions-role"],
     env=cdk.Environment(
         account="451645558365",
         region="us-east-1",
