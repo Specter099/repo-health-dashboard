@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: Specter099/.github/.github/workflows/python-ci.yml@main
+    with:
+      install-command: "pip install -r requirements-dev.txt"
+    secrets: inherit

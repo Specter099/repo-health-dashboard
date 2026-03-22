@@ -1,0 +1,14 @@
+# CODEOWNERS — defines default reviewers for pull requests.
+# Edit this file with actual team/owner mappings.
+#
+# Syntax:
+#   <pattern>  @owner1 @owner2
+#
+# Examples:
+#   *                @Specter099
+#   /docs/           @Specter099
+#   *.py             @Specter099
+#   /infrastructure/ @Specter099
+
+# Default: repo owner reviews everything
+*  @Specter099
