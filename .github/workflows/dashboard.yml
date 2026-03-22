@@ -1,0 +1,135 @@
+name: Repo Health Dashboard
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # Daily at 6am UTC
+  workflow_dispatch:        # Manual trigger
+    inputs:
+      deploy_target:
+        description: 'Deploy target'
+        required: false
+        default: 'both'
+        type: choice
+        options: [both, pages, s3, none]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-dashboard:
+    name: Collect metrics & build dashboard
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-path: ${{ steps.build.outputs.artifact-path }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install requests python-dateutil jinja2 --quiet
+
+      - name: Collect repo metrics
+        id: collect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: Specter099
+        run: python collect_metrics.py
+
+      - name: Build HTML dashboard
+        id: build
+        run: |
+          python build_dashboard.py
+          echo "artifact-path=dist/" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: dist/
+          retention-days: 7
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: build-dashboard
+    if: >
+      github.event_name == 'schedule' ||
+      github.event.inputs.deploy_target == 'both' ||
+      github.event.inputs.deploy_target == 'pages'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard
+          path: dist/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-s3:
+    name: Deploy to S3
+    needs: build-dashboard
+    if: >
+      github.event_name == 'schedule' ||
+      github.event.inputs.deploy_target == 'both' ||
+      github.event.inputs.deploy_target == 's3'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard
+          path: dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        env:
+          BUCKET: ${{ secrets.DASHBOARD_BUCKET }}   # e.g. repo-health-451645558365-us-east-1-an
+        run: |
+          aws s3 sync dist/ "s3://$BUCKET/" \
+            --delete \
+            --cache-control "max-age=300,public" \
+            --metadata-directive REPLACE
+
+          echo "S3 deployment complete: https://${BUCKET}.s3-website-us-east-1.amazonaws.com"
+
+      - name: Invalidate CloudFront (if configured)
+        if: secrets.CLOUDFRONT_DISTRIBUTION_ID != ''
+        env:
+          CF_DIST: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$CF_DIST" \
+            --paths "/*"
+          echo "CloudFront invalidation submitted"

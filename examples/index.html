@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repo Health — Specter099</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #13161e;
+    --surface2:  #1c2030;
+    --border:    #252a38;
+    --text:      #c9d1e0;
+    --text-dim:  #6b7694;
+    --green:     #3dd68c;
+    --yellow:    #f0c040;
+    --orange:    #f07840;
+    --red:       #e05070;
+    --blue:      #5090e8;
+    --purple:    #9070e0;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-left h1 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  .header-left h1 span { color: var(--green); }
+  .header-left .subtitle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .generated {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat {
+    background: var(--surface);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1;
+  }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-value.red    { color: var(--red); }
+  .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  /* ── Controls ── */
+  .controls {
+    padding: 16px 40px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--surface);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .search {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 4px;
+    outline: none;
+    width: 200px;
+    transition: border-color 0.15s;
+  }
+  .search:focus { border-color: var(--blue); }
+  .search::placeholder { color: var(--text-dim); }
+
+  /* ── Grid ── */
+  main {
+    padding: 24px 40px 48px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  /* ── Cards ── */
+  .repo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.15s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .repo-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+  .repo-card.score-high::before  { background: var(--green); }
+  .repo-card.score-mid::before   { background: var(--yellow); }
+  .repo-card.score-low::before   { background: var(--red); }
+  .repo-card:hover {
+    border-color: #3a4055;
+    transform: translateY(-1px);
+  }
+
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .repo-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+  }
+  .repo-name:hover { color: var(--blue); }
+
+  .score-badge {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .score-badge.score-high  { background: rgba(61,214,140,0.15); color: var(--green); }
+  .score-badge.score-mid   { background: rgba(240,192,64,0.15);  color: var(--yellow); }
+  .score-badge.score-low   { background: rgba(224,80,112,0.15);  color: var(--red); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .lang-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .staleness-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .fresh   { background: rgba(61,214,140,0.15); color: var(--green); }
+  .recent  { background: rgba(80,144,232,0.15); color: var(--blue); }
+  .aging   { background: rgba(240,192,64,0.15);  color: var(--yellow); }
+  .stale   { background: rgba(240,120,64,0.15);  color: var(--orange); }
+  .dormant { background: rgba(107,118,148,0.15); color: var(--text-dim); }
+
+  .commit-date { font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
+
+  .repo-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .topics { display: flex; gap: 6px; flex-wrap: wrap; }
+  .topic {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: rgba(144,112,224,0.15);
+    color: var(--purple);
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: lowercase;
+  }
+
+  /* Badges */
+  .card-badges { display: flex; gap: 6px; flex-wrap: wrap; min-height: 24px; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .badge-warn    { background: rgba(240,192,64,0.15);  color: var(--yellow); }
+  .badge-info    { background: rgba(80,144,232,0.15);  color: var(--blue); }
+  .badge-neutral { background: rgba(107,118,148,0.15); color: var(--text-dim); }
+  .badge-danger  { background: rgba(224,80,112,0.15);  color: var(--red); }
+
+  /* Card footer */
+  .card-footer {
+    display: flex;
+    gap: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    flex-wrap: wrap;
+  }
+
+  /* Empty state */
+  .empty { text-align: center; color: var(--text-dim); padding: 60px; font-family: var(--mono); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header, .controls, main { padding-left: 16px; padding-right: 16px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* Animate cards in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .repo-card { animation: fadeUp 0.25s ease both; }
+  .repo-card:nth-child(1)  { animation-delay: 0.03s; }
+  .repo-card:nth-child(2)  { animation-delay: 0.06s; }
+  .repo-card:nth-child(3)  { animation-delay: 0.09s; }
+  .repo-card:nth-child(4)  { animation-delay: 0.12s; }
+  .repo-card:nth-child(5)  { animation-delay: 0.15s; }
+  .repo-card:nth-child(6)  { animation-delay: 0.18s; }
+  .repo-card:nth-child(n+7) { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>⬡ repo health / <span>Specter099</span></h1>
+    <div class="subtitle">automated hygiene dashboard · updated daily</div>
+  </div>
+  <div class="generated">Generated Mar 21, 2026</div>
+</header>
+
+<div class="summary-bar">
+  <div class="stat">
+    <div class="stat-value yellow">71</div>
+    <div class="stat-label">Avg Health Score</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">12</div>
+    <div class="stat-label">Active Repos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value yellow">3</div>
+    <div class="stat-label">Open PRs</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value orange">5</div>
+    <div class="stat-label">Stale Branches</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value red">2</div>
+    <div class="stat-label">Dependabot Alerts</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value yellow">7/12</div>
+    <div class="stat-label">Branch Protected</div>
+  </div>
+</div>
+
+<div class="controls">
+  <input class="search" type="text" placeholder="Search repos..." id="search" oninput="filterCards()">
+  <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" onclick="setFilter('score-low', this)">⚠ Needs Attention</button>
+  <button class="filter-btn" onclick="setFilter('score-mid', this)">◑ Fair</button>
+  <button class="filter-btn" onclick="setFilter('score-high', this)">✓ Healthy</button>
+  <button class="filter-btn" onclick="setFilter('stale', this)">⏱ Stale</button>
+</div>
+
+<main>
+  <div class="grid" id="grid">
+    
+        <div class="repo-card score-high">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/homelab-cdk" target="_blank" class="repo-name">homelab-cdk</a>
+              <div class="score-badge score-high">91</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill fresh">fresh</span>
+              <span class="commit-date">Last commit: Mar 18, 2026</span>
+            </div>
+            <p class="repo-desc">CDK Python stacks for homelab AWS infra — CloudFront, ALB, ACM, PCA</p>
+            <div class="topics"><span class="topic">aws</span><span class="topic">cdk</span><span class="topic">homelab</span><span class="topic">python</span></div>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-info">⇄ 1 open PR</span><span class="badge badge-neutral">◎ 1 issue</span>
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔒 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-high">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/dotfiles" target="_blank" class="repo-name">dotfiles</a>
+              <div class="score-badge score-high">100</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#89e051"></span>Shell
+              <span class="staleness-pill fresh">fresh</span>
+              <span class="commit-date">Last commit: Mar 21, 2026</span>
+            </div>
+            <p class="repo-desc">zsh + macOS bootstrap for development machines</p>
+            <div class="topics"><span class="topic">dotfiles</span><span class="topic">zsh</span><span class="topic">macos</span></div>
+          </div>
+          <div class="card-badges">
+            
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔒 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-high">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/bisect-runner" target="_blank" class="repo-name">bisect-runner</a>
+              <div class="score-badge score-high">85</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill fresh">fresh</span>
+              <span class="commit-date">Last commit: Mar 21, 2026</span>
+            </div>
+            <p class="repo-desc">Flexible git bisect automation — pytest, CDK, shell modes</p>
+            <div class="topics"><span class="topic">git</span><span class="topic">bisect</span><span class="topic">automation</span></div>
+          </div>
+          <div class="card-badges">
+            
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-mid">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/cdkdiff" target="_blank" class="repo-name">cdkdiff</a>
+              <div class="score-badge score-mid">68</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill recent">recent</span>
+              <span class="commit-date">Last commit: Feb 28, 2026</span>
+            </div>
+            <p class="repo-desc">Risk-scored CDK change summaries as a pip CLI tool</p>
+            <div class="topics"><span class="topic">aws</span><span class="topic">cdk</span><span class="topic">cli</span><span class="topic">python</span></div>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-warn">⚠ 1 stale branch</span><span class="badge badge-info">⇄ 1 open PR</span><span class="badge badge-neutral">◎ 2 issues</span><span class="badge badge-danger">⚡ 1 dependabot</span>
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔒 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-mid">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/iamwhy" target="_blank" class="repo-name">iamwhy</a>
+              <div class="score-badge score-mid">75</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill recent">recent</span>
+              <span class="commit-date">Last commit: Feb 10, 2026</span>
+            </div>
+            <p class="repo-desc">IAM denial analysis CLI — explains why an action was denied</p>
+            <div class="topics"><span class="topic">aws</span><span class="topic">iam</span><span class="topic">cli</span></div>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-warn">⚠ 1 stale branch</span><span class="badge badge-neutral">◎ 1 issue</span>
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔒 Branch protection</span>
+            <span title="License">📄 Apache-2.0</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-high">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/ssmtree" target="_blank" class="repo-name">ssmtree</a>
+              <div class="score-badge score-high">80</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill aging">aging</span>
+              <span class="commit-date">Last commit: Jan 15, 2026</span>
+            </div>
+            <p class="repo-desc">Visualize AWS Parameter Store hierarchy as a tree</p>
+            <div class="topics"><span class="topic">aws</span><span class="topic">ssm</span><span class="topic">cli</span></div>
+          </div>
+          <div class="card-badges">
+            
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-low">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/secretsync" target="_blank" class="repo-name">secretsync</a>
+              <div class="score-badge score-low">58</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill aging">aging</span>
+              <span class="commit-date">Last commit: Jan 05, 2026</span>
+            </div>
+            <p class="repo-desc">.env <-> Secrets Manager bidirectional sync CLI</p>
+            <div class="topics"><span class="topic">aws</span><span class="topic">secrets</span><span class="topic">cli</span></div>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-warn">⚠ 1 stale branch</span><span class="badge badge-info">⇄ 1 open PR</span><span class="badge badge-neutral">◎ 2 issues</span><span class="badge badge-danger">⚡ 1 dependabot</span>
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔒 Branch protection</span>
+            <span title="License">⚠️ No license</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-low">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/bgp-route-analyzer" target="_blank" class="repo-name">bgp-route-analyzer</a>
+              <div class="score-badge score-low">45</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill stale">stale</span>
+              <span class="commit-date">Last commit: Sep 12, 2025</span>
+            </div>
+            <p class="repo-desc">NOC BGP route analysis with Netmiko, TextFSM, SQLite, FastAPI</p>
+            <div class="topics"><span class="topic">bgp</span><span class="topic">networking</span><span class="topic">fastapi</span></div>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-warn">⚠ 2 stale branches</span><span class="badge badge-neutral">◎ 3 issues</span>
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-mid">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/stackdrift" target="_blank" class="repo-name">stackdrift</a>
+              <div class="score-badge score-mid">75</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill stale">stale</span>
+              <span class="commit-date">Last commit: Nov 20, 2025</span>
+            </div>
+            <p class="repo-desc">CloudFormation drift detection CLI</p>
+            <div class="topics"><span class="topic">aws</span><span class="topic">cloudformation</span><span class="topic">cli</span></div>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-neutral">◎ 1 issue</span>
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">📄 MIT</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-mid">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/homelab-ansible" target="_blank" class="repo-name">homelab-ansible</a>
+              <div class="score-badge score-mid">72</div>
+            </div>
+            <div class="card-meta">
+              
+              <span class="staleness-pill fresh">fresh</span>
+              <span class="commit-date">Last commit: Mar 10, 2026</span>
+            </div>
+            <p class="repo-desc">Ansible playbooks for pfSense, Pi-hole, Bitwarden, PKI automation</p>
+            <div class="topics"><span class="topic">ansible</span><span class="topic">homelab</span><span class="topic">pfsense</span><span class="topic">automation</span></div>
+          </div>
+          <div class="card-badges">
+            
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">⚠️ No license</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-mid">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/aws-workaround-scripts" target="_blank" class="repo-name">aws-workaround-scripts</a>
+              <div class="score-badge score-mid">60</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#89e051"></span>Shell
+              <span class="staleness-pill dormant">dormant</span>
+              <span class="commit-date">Last commit: Jun 01, 2025</span>
+            </div>
+            
+            <div class="topics"></div>
+          </div>
+          <div class="card-badges">
+            
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">⚠️ No license</span>
+            <span title="Default branch">⎇ main</span>
+          </div>
+        </div>
+        <div class="repo-card score-low">
+          <div class="card-header">
+            <div class="card-title-row">
+              <a href="https://github.com/Specter099/old-network-tools" target="_blank" class="repo-name">old-network-tools</a>
+              <div class="score-badge score-low">52</div>
+            </div>
+            <div class="card-meta">
+              <span class="lang-dot" style="background:#3572A5"></span>Python
+              <span class="staleness-pill dormant">dormant</span>
+              <span class="commit-date">Last commit: Mar 01, 2024</span>
+            </div>
+            <p class="repo-desc">Legacy network automation scripts (pre-Ansible era)</p>
+            <div class="topics"></div>
+          </div>
+          <div class="card-badges">
+            
+          </div>
+          <div class="card-footer">
+            <span title="Branch protection">🔓 Branch protection</span>
+            <span title="License">⚠️ No license</span>
+            <span title="Default branch">⎇ master</span>
+          </div>
+        </div>
+  </div>
+  <div class="empty" id="empty" style="display:none">No repos match this filter.</div>
+</main>
+
+<script>
+  let currentFilter = 'all';
+  let searchTerm = '';
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterCards();
+  }
+
+  function filterCards() {
+    searchTerm = document.getElementById('search').value.toLowerCase();
+    const cards = document.querySelectorAll('.repo-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const name = card.querySelector('.repo-name').textContent.toLowerCase();
+      const desc = card.querySelector('.repo-desc')?.textContent.toLowerCase() || '';
+      const matchesSearch = !searchTerm || name.includes(searchTerm) || desc.includes(searchTerm);
+      const staleness = card.querySelector('.staleness-pill')?.textContent || '';
+
+      let matchesFilter = currentFilter === 'all';
+      if (currentFilter === 'stale') matchesFilter = ['stale','dormant','aging'].includes(staleness);
+      else if (currentFilter !== 'all') matchesFilter = card.classList.contains(currentFilter);
+
+      const show = matchesSearch && matchesFilter;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    document.getElementById('empty').style.display = visible === 0 ? '' : 'none';
+  }
+</script>
+</body>
+</html>
