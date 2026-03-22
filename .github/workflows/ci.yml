@@ -8,6 +8,4 @@ on:
 jobs:
   ci:
     uses: Specter099/.github/.github/workflows/python-ci.yml@main
-    with:
-      install-command: "pip install -r requirements-dev.txt"
     secrets: inherit
