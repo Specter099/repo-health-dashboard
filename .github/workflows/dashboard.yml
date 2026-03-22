@@ -43,7 +43,7 @@ jobs:
       - name: Collect repo metrics
         id: collect
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           GITHUB_USERNAME: Specter099
         run: python collect_metrics.py
 
