@@ -10,15 +10,14 @@ on:
         required: false
         default: 'both'
         type: choice
-        options: [both, pages, s3, none]
+        options: [s3, none]
 
 permissions:
   contents: read
-  pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "dashboard"
   cancel-in-progress: false
 
 jobs:
@@ -60,43 +59,11 @@ jobs:
           path: dist/
           retention-days: 7
 
-  deploy-pages:
-    name: Deploy to GitHub Pages
-    needs: build-dashboard
-    if: >
-      github.event_name == 'schedule' ||
-      github.event.inputs.deploy_target == 'both' ||
-      github.event.inputs.deploy_target == 'pages'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: dashboard
-          path: dist/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload to Pages
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: dist/
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
   deploy-s3:
     name: Deploy to S3
     needs: build-dashboard
     if: >
       github.event_name == 'schedule' ||
-      github.event.inputs.deploy_target == 'both' ||
       github.event.inputs.deploy_target == 's3'
     runs-on: ubuntu-latest
     environment: production
