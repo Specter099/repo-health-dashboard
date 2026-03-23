@@ -473,7 +473,7 @@ html = f"""<!DOCTYPE html>
   </div>
   <div class="header-right">
     <div class="generated">Generated {generated_at}</div>
-    <a href="/logout" class="logout-btn">Logout</a>
+    <a href="/_signout" class="logout-btn">Logout</a>
   </div>
 </header>
 
