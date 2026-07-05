@@ -1,4 +1,4 @@
-aws-cdk-lib~=2.260.0
+aws-cdk-lib~=2.261.0
 constructs>=10.6.0,<11.0.0
 cdk-nag>=3.0.1
 specter-static-site @ git+https://github.com/Specter099/static-site-infra.git@main
